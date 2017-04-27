@@ -1,0 +1,40 @@
+{% extends 'Base.html' %}
+{% load bootstrap3 %}
+
+
+{% block content %}
+    <div class="col-md-9">
+            <div class="thumbnail">
+                {% if request.user.is_authenticated %}
+                    <h4>{{ request.user }}, feel free to edit your comment!</h4>
+                    <hr>
+                    <form action="{% url 'edit_comment' comment_id=comment.id%}?next={{ next }}" method="post" class="form">
+                        {% csrf_token %}
+                        {% bootstrap_form form %}
+                        {% buttons %}
+                            <button type="submit" class="btn btn-primary">
+                                Submit
+                                {% bootstrap_icon "ok" %}
+                            </button>
+                        {% endbuttons %}
+                    </form>
+                    {% if form.errors %}
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <div class="alert alert-danger">
+                                    <strong>{{ error|escape }}</strong>
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                <strong>{{ error|escape }}</strong>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% else %}
+                    <h4>Please, <a href="{% url 'login' %}">Log in</a> or <a href="{% url 'register' %}">Register</a> to leave a review!</h4>
+                {% endif %}
+            </div>
+        </div>
+{% endblock %}

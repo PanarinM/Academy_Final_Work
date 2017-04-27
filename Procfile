@@ -1,0 +1,1 @@
+web: gunicorn worst_buy.wsgi --log-file -

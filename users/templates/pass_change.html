@@ -1,0 +1,29 @@
+{% extends 'Base.html' %}
+{% load bootstrap3 %}
+
+{% block content %}
+    <form action="{% url 'pass_change' %}" method="post" class="form">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+            {% buttons %}
+                <button type="submit" class="btn btn-primary">
+                    Save Changes
+                    {% bootstrap_icon "ok" %}
+                </button>
+            {% endbuttons %}
+    </form>
+    {% if form.errors %}
+        {% for field in form %}
+            {% for error in field.errors %}
+                <div class="alert alert-danger">
+                    <strong>{{ error|escape }}</strong>
+                </div>
+            {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+            <div class="alert alert-danger">
+                <strong>{{ error|escape }}</strong>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endblock %}

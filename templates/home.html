@@ -1,0 +1,21 @@
+{% extends 'Base.html' %}
+
+{% block content %}
+    {% for prod in products %}
+        <div class="row">
+            <div class="panel panel-default">
+                <a href="{% url 'single_product' prod_id=prod.id %}">
+                    <div class="panel-body">
+                        <div class="col-md-6">
+                            <img src="{{ prod.photo.url }}" class="img-responsive">
+                            <h4>{{ prod.name }} {{ prod.manufacturer }}</h4>
+                        </div>
+                        <div class="col-md-6">
+                            {{ prod.attributes }}
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    {% endfor %}
+{% endblock content %}

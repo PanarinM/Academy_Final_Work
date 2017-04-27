@@ -1,0 +1,12 @@
+Django==1.10.5
+django-bootstrap3==8.2.1
+django-prettyjson==0.2.2
+django-solo==1.1.2
+djangorestframework==3.5.4
+gunicorn==19.7.1
+olefile==0.44
+pillow==4.0.0
+psycopg2==2.6.2
+Pygments==2.2.0
+six==1.10.0
+standardjson==0.3.1

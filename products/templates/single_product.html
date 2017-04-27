@@ -1,0 +1,91 @@
+{% extends 'Base.html' %}
+{% load bootstrap3 %}
+{% block content %}
+    <style>
+    .yellow {
+        color: yellow;
+    }
+    .desctext {
+        text-align: justify;
+    }
+    .comentedit {
+        color: darkgrey;
+        font-size: 1.5ch;
+    }
+    </style>
+    <div class="container">
+        <div class="col-md-9">
+            <div class="thumbnail">
+                <img class="img-responsive" src="{{ prod.photo.url }}" alt="">
+                <div class="caption-full">
+                    <h4 class="pull-right thumbnail">Price: {{ prod.price }} $<br>
+                                           Rating: {{ prod.rating }} {% bootstrap_icon 'star' extra_classes="yellow"%}</h4>
+                    <h4>{{ prod.name }} {{ prod.manufacturer }}</h4>
+                    <div class="thumbnail">
+                        <p class="desctext">{{ prod.description }}</p>
+                        <p>{{ prod.attributes }}</p>
+                    </div>
+                    {% buttons %}
+                        <a class="btn btn-primary" href="#" role="button">Add to cart {% bootstrap_icon "shopping-cart" %}</a>
+                    {% endbuttons %}
+                </div>
+            </div>
+        </div>
+        {% for comment in comments %}
+            <div class="col-md-9">
+                <div class="thumbnail">
+                    <h5>{{ comment.commenter }}, <img src="{{ comment.commenter.avatar.url }}" class="img-circle" width="50" height="50">
+                        {% if comment.commenter_id == request.user.id or request.user.is_admin %}
+                            <a href="{% url "delete_comment" comment_id=comment.id%}?next={{ request.path }}" class="pull-right">{% bootstrap_icon "remove-circle" %}</a>
+                            <a href="{% url "edit_comment" comment_id=comment.id %}?next={{ request.path }}" class="pull-right">{% bootstrap_icon "pencil" %}</a>
+                        {% endif %}
+                    </h5>
+                    <hr>
+                    <h6 class="pull-right">Date: {{ comment.date }}<br>
+                                           Rating: {{ comment.rating }} {% bootstrap_icon 'star' extra_classes="yellow"%}</h6>
+                    <p>{% bootstrap_icon 'thumbs-up' %} {{ comment.positive }}</p>
+                    <p>{% bootstrap_icon 'thumbs-down' %} {{ comment.negative }}</p>
+                    <p>{{ comment.body }}</p>
+                    {% if comment.edit_date != null %}
+                        <p class="comentedit">Edited {{ comment.edit_amount }} times. Last edit: {{ comment.edit_date }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+
+        <div class="col-md-9">
+            <div class="thumbnail">
+                {% if request.user.is_authenticated %}
+                    <h4>{{ request.user }}, please, leave a review!</h4>
+                    <hr>
+                    <form action="{% url 'single_product' prod_id=prod.id %}" method="post" class="form">
+                        {% csrf_token %}
+                        {% bootstrap_form form %}
+                        {% buttons %}
+                            <button type="submit" class="btn btn-primary">
+                                Submit
+                                {% bootstrap_icon "ok" %}
+                            </button>
+                        {% endbuttons %}
+                    </form>
+                    {% if form.errors %}
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <div class="alert alert-danger">
+                                    <strong>{{ error|escape }}</strong>
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                <strong>{{ error|escape }}</strong>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% else %}
+                    <h4>Please, <a href="{% url 'login' %}">Log in</a> or <a href="{% url 'register' %}">Register</a> to leave a review!</h4>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,104 @@
+
+{# Load the tag library #}
+{% load bootstrap3 %}
+
+{% load solo_tags %}
+{% load product_tags %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{# Display django.contrib.messages as Bootstrap alerts #}
+{% bootstrap_messages %}
+
+<style>
+    .bg_head {
+        background-color: #195f91;
+    }
+    .bg_foot {
+        background-color: #2C2C2C;
+        text-align: center;
+        color: #a6e1ec;
+    }
+    .log_text {
+        text-align: right;
+        color: whitesmoke;
+        font-size: 24px;
+    }
+    .menu-text {
+        font-size: 15px;
+    }
+    .box_height {
+        height: 22%;
+    }
+    .sep_box {
+        height: 10px;
+    }
+    .numberCircle {
+    border-radius: 50%;
+    width: 21px;
+    height: 21px;
+    border: 2px solid #fff;
+    color: #fff;
+    text-align: center;
+    font: 15px Arial, sans-serif;
+    display: inline-block;
+}
+</style>
+
+{% get_solo 'core.Configuration' as configuration %}
+{% get_categories as categories %}
+
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-md-4 bg_head box_height">
+            <a href={% url 'home' %}><img class="img-responsive" src="{{ configuration.logo.url }}" alt=""></a>
+        </div>
+        <div class="col-md-8 bg_head box_height">
+            <div class="log_text">
+                {% if request.user.is_authenticated %}
+                    Hello, <a class="log_text" href="{% url 'user_profile' %}">{{ request.user.username }}</a>!
+                    {% buttons %}
+                        <a class="btn btn-primary" href="{% url 'logout' %}?next={{ request.path }}" role="button">Log out {% bootstrap_icon "road" %}</a>
+                        <a class="btn btn-primary" href="{% url 'shoppingcart' %}" role="button">{% bootstrap_icon "shopping-cart" %} Shopping cart <div class="numberCircle">{{ request.user.cart_owner.item_count }}</div></a>
+                    {% endbuttons %}
+                {% else %}
+                     Hello, anon.
+                    {% buttons %}
+                        <a class="btn btn-primary" href="{% url 'login' %}?next={{ request.path }}" role="button">Log in {% bootstrap_icon "user" %}</a>
+                        <a class="btn btn-primary" href="{% url 'register' %}?next={{ request.path }}" role="button">Register {% bootstrap_icon "plus" %}</a>
+                    {% endbuttons %}
+                {% endif %}
+            </div>
+        </div>
+        </div>
+    <div class="row sep_box">
+    </div>
+	<div class="row">
+		<div class="col-md-2">
+			<div class="list-group">
+                <a href="{% url 'home' %}" class="list-group-item">Home</a>
+                {% for category in categories %}
+                    <a href="{% url 'prod_by_cat' cat_name=category.category_name %}" class="list-group-item menu-text">{{ category }}</a>
+                {% endfor %}
+			</div>
+		</div>
+		<div class="col-md-4">
+            {% block content %}
+                content
+            {% endblock content %}
+		</div>
+	</div>
+	<div class="row bg_foot">
+		<div class="col-md-4">
+		</div>
+		<div class="col-md-4">
+			<p>
+				{{ configuration.footer_text }}
+			</p>
+		</div>
+		<div class="col-md-4">
+		</div>
+	</div>
+</div>
