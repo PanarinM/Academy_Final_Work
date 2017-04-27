@@ -3,24 +3,33 @@
 {% load bootstrap3 %}
 
 {% block content %}
+    <style>
+    table, th, td {
+        border: 1px solid black;
+        padding: 5px;
+    }
+    </style>
+    <div class="row">
+        <div class="panel panel-default">
+            <table style="width:100%">
+                <tr>
+                    <th>Product id</th>
+                    <th>Product name</th>
+                    <th colspan="2">Amount</th>
+                </tr>
+                {% for prod in products %}
+                    <tr>
+                        <td>{{ prod.id }}</td>
+                        <td>{{ prod }}</td>
+                        <td>{% bootstrap_icon "minus" %} {{ prod.product_in_cart.get.counter }} {% bootstrap_icon "plus" %}</td>
+                        <td>delete</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
     {% buttons %}
         <a class="btn btn-primary" href="#" role="button">Checkout {% bootstrap_icon "arrow-right" %}</a>
     {% endbuttons %}
-    {% for prod in products %}
-        <div class="row">
-            <div class="panel panel-default">
-                <a href="{% url 'single_product' prod_id=prod.id %}">
-                    <div class="panel-body">
-                        <div class="col-md-6">
-                            <img src="{{ prod.photo.url }}" class="img-responsive">
-                            <h4>{{ prod.name }} {{ prod.manufacturer }}</h4>
-                        </div>
-                        <div class="col-md-6">
-                            {{ prod.attributes }}
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-    {% endfor %}
+    </div>
+
 {% endblock content%}

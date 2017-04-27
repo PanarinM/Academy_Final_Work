@@ -49,6 +49,7 @@
 
 {% get_solo 'core.Configuration' as configuration %}
 {% get_categories as categories %}
+{% get_cart_count request.user as cart_count %}
 
 <div class="container-fluid">
 	<div class="row">
@@ -61,7 +62,7 @@
                     Hello, <a class="log_text" href="{% url 'user_profile' %}">{{ request.user.username }}</a>!
                     {% buttons %}
                         <a class="btn btn-primary" href="{% url 'logout' %}?next={{ request.path }}" role="button">Log out {% bootstrap_icon "road" %}</a>
-                        <a class="btn btn-primary" href="{% url 'shoppingcart' %}" role="button">{% bootstrap_icon "shopping-cart" %} Shopping cart <div class="numberCircle">{{ request.user.cart_owner.item_count }}</div></a>
+                        <a class="btn btn-primary" href="{% url 'shoppingcart' %}" role="button">{% bootstrap_icon "shopping-cart" %} Shopping cart <div class="numberCircle">{{ cart_count }}</div></a>
                     {% endbuttons %}
                 {% else %}
                      Hello, anon.
@@ -84,7 +85,7 @@
                 {% endfor %}
 			</div>
 		</div>
-		<div class="col-md-4">
+		<div class="col-md-6">
             {% block content %}
                 content
             {% endblock content %}

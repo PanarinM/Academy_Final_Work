@@ -58,12 +58,13 @@ class Comment(models.Model):
 
 
 class ShoppingCart(models.Model):
-    owner = models.OneToOneField(User, related_name='cart_owner')
-    items = models.ManyToManyField(Product, related_name='products_in_cart')
+    owner = models.ForeignKey(User, related_name='prod_owner')
+    item = models.ForeignKey(Product, related_name='product_in_cart', null=True)
+    counter = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ('owner', 'item')
 
     def __str__(self):
-        return '{}, items count({})'.format(self.owner, self.items.count())
+        return '{}, {}, {}'.format(self.owner, self.item, self.counter)
 
-    @property
-    def item_count(self):
-        return self.items.count()

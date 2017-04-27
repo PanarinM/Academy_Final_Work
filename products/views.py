@@ -116,7 +116,7 @@ class Edit_comment(View):
 
 class Shopping_Cart(View):
     def get(self, request):
-        prods = Product.objects.filter(products_in_cart__owner=request.user)
+        prods = Product.objects.filter(product_in_cart__owner=request.user)
         for item in prods:
             item.attributes = JsonPrettifier(item.attributes)
         if request.user.is_authenticated:
