@@ -11,7 +11,7 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.db.utils import IntegrityError
 
-from products.models import Product, Comment
+from products.models import Product, Comment, ShoppingCart
 from products.forms import CommentForm
 
 
@@ -116,10 +116,38 @@ class Edit_comment(View):
 
 class Shopping_Cart(View):
     def get(self, request):
-        prods = Product.objects.filter(product_in_cart__owner=request.user)
+        prods = Product.objects.filter(product_in_cart__owner=request.user).order_by('id')
+        total_cost = 0
         for item in prods:
             item.attributes = JsonPrettifier(item.attributes)
+            total_cost += item.price*item.product_in_cart.get().counter
         if request.user.is_authenticated:
-            return render(request, 'cart.html', {'products': prods})
+            return render(request, 'cart.html', {'products': prods, "total": total_cost})
         HttpResponseRedirect(reverse('home'))
+
+
+class Delete_From_Cart(View):
+    def get(self, request, prod_id):
+        if request.user.is_authenticated:
+            item = ShoppingCart.objects.get(item_id=prod_id)
+            item.delete()
+        return HttpResponseRedirect(reverse('shoppingcart'))
+
+
+class Minus_From_Cart(View):
+    def get(self, request, prod_id):
+        if request.user.is_authenticated:
+            item = ShoppingCart.objects.get(item_id=prod_id)
+            item.counter -= 1
+            item.save()
+        return HttpResponseRedirect(reverse('shoppingcart'))
+
+
+class Plus_From_Cart(View):
+    def get(self, request, prod_id):
+        if request.user.is_authenticated:
+            item = ShoppingCart.objects.get(item_id=prod_id)
+            item.counter += 1
+            item.save()
+        return HttpResponseRedirect(reverse('shoppingcart'))
 

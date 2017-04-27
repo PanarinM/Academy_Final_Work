@@ -1,30 +1,44 @@
 {% extends 'Base.html' %}
 
 {% load bootstrap3 %}
+{% load mathfilters %}
 
 {% block content %}
     <style>
     table, th, td {
         border: 1px solid black;
         padding: 5px;
+        empty-cells: hide;
+        border-collapse: separate;
     }
     </style>
     <div class="row">
         <div class="panel panel-default">
-            <table style="width:100%">
+            <table style="width: 100%">
                 <tr>
                     <th>Product id</th>
                     <th>Product name</th>
                     <th colspan="2">Amount</th>
+                    <th colspan="2">Price</th>
                 </tr>
                 {% for prod in products %}
                     <tr>
                         <td>{{ prod.id }}</td>
                         <td>{{ prod }}</td>
-                        <td>{% bootstrap_icon "minus" %} {{ prod.product_in_cart.get.counter }} {% bootstrap_icon "plus" %}</td>
-                        <td>delete</td>
+                        <td><a href="{% url "minus_shoppingcart" prod_id=prod.id %}">{% bootstrap_icon "minus" %}</a> {{ prod.product_in_cart.get.counter }} <a href="{% url "plus_shoppingcart" prod_id=prod.id %}">{% bootstrap_icon "plus" %}</a></td>
+                        <td><a href="{% url "del_shoppingcart" prod_id=prod.id %}">delete</a></td>
+                        <td>{{ prod.price }} $</td>
+                        <td>subtotal: {{ prod.price|mul:prod.product_in_cart.get.counter }} $</td>
                     </tr>
                 {% endfor %}
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>total: {{ total }} $</td>
+                </tr>
             </table>
         </div>
     {% buttons %}
