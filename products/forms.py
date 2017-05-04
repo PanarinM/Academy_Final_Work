@@ -8,7 +8,7 @@ class CommentForm(forms.ModelForm):
     rating = forms.DecimalField(label='Rating (0-10)')
     class Meta:
         model = Comment
-        exclude = ('date', 'commenter', 'product', 'edit_date', 'edit_amount')
+        exclude = ('date', 'author', 'product', 'edit_date', 'edit_amount')
         widgets = {
             'positive': forms.Textarea(attrs={'rows': 4, 'cols': 15}),
             'negative': forms.Textarea(attrs={'rows': 4, 'cols': 15}),

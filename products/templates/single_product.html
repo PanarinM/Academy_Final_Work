@@ -2,9 +2,6 @@
 {% load bootstrap3 %}
 {% block content %}
     <style>
-    .yellow {
-        color: yellow;
-    }
     .desctext {
         text-align: justify;
     }
@@ -23,7 +20,11 @@
                     <h4>{{ prod.name }} {{ prod.manufacturer }}</h4>
                     <div class="thumbnail">
                         <p class="desctext">{{ prod.description }}</p>
-                        <p>{{ prod.attributes }}</p>
+                        <div class="panel panel-default" style="color: black">
+                            {% for attribute_name in  prod.product_for_value.all|slice:":5" %}
+                                <p>{{ attribute_name.attribute.name }}: {{ attribute_name.value }} {{ attribute_name.attribute.dimension }}</p>
+                            {% endfor %}
+                        </div>
                     </div>
                     {% buttons %}
                         <a class="btn btn-primary" href="#" role="button">Add to cart {% bootstrap_icon "shopping-cart" %}</a>
@@ -34,7 +35,8 @@
         {% for comment in comments %}
             <div class="col-md-9">
                 <div class="thumbnail">
-                    <h5>{{ comment.commenter }}, <img src="{{ comment.commenter.avatar.url }}" class="img-circle" width="50" height="50">
+                    <h5>{{ comment.author }}, <img src="{{ comment.author.avatar.url }}" class="img-circle" width="50"
+                                                   height="50">
                         {% if comment.commenter_id == request.user.id or request.user.is_admin %}
                             <a href="{% url "delete_comment" comment_id=comment.id%}?next={{ request.path }}" class="pull-right">{% bootstrap_icon "remove-circle" %}</a>
                             <a href="{% url "edit_comment" comment_id=comment.id %}?next={{ request.path }}" class="pull-right">{% bootstrap_icon "pencil" %}</a>

@@ -1,18 +1,31 @@
 from django.contrib import admin
-from django.contrib.postgres.fields import JSONField
 
-from prettyjson import PrettyJSONWidget
-
-from products.models import Product, Category, Comment, ShoppingCart
+from products.models import Product, Category, Comment, ShoppingCart, Attribute, AttributeValue
 
 
-class JsonAdmin(admin.ModelAdmin):
-    formfield_overrides = {
-        JSONField: {'widget': PrettyJSONWidget }
-    }
+class AttributeAdmin(admin.ModelAdmin):
+    list_display = ("category", "name", "dimension")
 
 
-admin.site.register(Product, JsonAdmin)
-admin.site.register(Comment)
+class AttributeValueAdmin(admin.ModelAdmin):
+    list_display = ("product", "attribute", "value")
+
+
+class ShoppingCartAdmin(admin.ModelAdmin):
+    list_display = ("owner", "item", "counter")
+
+
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ("author", "product", "date")
+
+
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ("name", "manufacturer", "category", "price", "rating", "views")
+
+
+admin.site.register(Product, ProductAdmin)
+admin.site.register(Comment, CommentAdmin)
 admin.site.register(Category)
-admin.site.register(ShoppingCart)
+admin.site.register(ShoppingCart, ShoppingCartAdmin)
+admin.site.register(Attribute, AttributeAdmin)
+admin.site.register(AttributeValue, AttributeValueAdmin)

@@ -10,8 +10,10 @@
                             <img src="{{ prod.photo.url }}" class="img-responsive">
                             <h4>{{ prod.name }} {{ prod.manufacturer }}</h4>
                         </div>
-                        <div class="col-md-6">
-                            {{ prod.attributes }}
+                        <div class="col-md-6 panel panel-default" style="color: black">
+                            {% for attribute_name in  prod.product_for_value.all|slice:":5" %}
+                                <p>{{ attribute_name.attribute.name }}: {{ attribute_name.value }} {{ attribute_name.attribute.dimension }}</p>
+                            {% endfor %}
                         </div>
                     </div>
                 </a>
