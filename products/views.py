@@ -5,7 +5,7 @@ from django.shortcuts import render, get_object_or_404, HttpResponseRedirect
 from django.urls import reverse
 from django.views import View
 
-from products.forms import CommentForm
+from products.forms import CommentForm, AddToCartForm
 from products.models import Product, Comment, ShoppingCart
 
 
@@ -26,20 +26,22 @@ class OneProduct(View):
         except ZeroDivisionError:
             prod.rating = 0
         prod.save()
-        form = CommentForm()
-        return render(request, "single_product.html", {"prod": prod, "comments": comments, "form": form})
+        commentform = CommentForm()
+        cartform = AddToCartForm()
+        return render(request, "single_product.html", {"prod": prod, "comments": comments, "commentform": commentform, "cartform": cartform})
 
     def post(self, request, prod_id):
-        form = CommentForm(request.POST)
+        commentform = CommentForm(request.POST)
+        cartform = AddToCartForm()
         prod = get_object_or_404(Product, pk=prod_id)
         comments = Comment.objects.filter(product_id=prod_id)
-        if form.is_valid():
+        if commentform.is_valid():
             author = request.user
             product = Product.objects.get(pk=prod_id)
-            pos = form.cleaned_data["positive"]
-            neg = form.cleaned_data["negative"]
-            body = form.cleaned_data["body"]
-            rating = form.cleaned_data["rating"]
+            pos = commentform.cleaned_data["positive"]
+            neg = commentform.cleaned_data["negative"]
+            body = commentform.cleaned_data["body"]
+            rating = commentform.cleaned_data["rating"]
             comm = Comment(author=author,
                            product=product,
                            positive=pos,
@@ -49,8 +51,8 @@ class OneProduct(View):
             try:
                 comm.save()
             except IntegrityError:
-                form.add_error("positive", "You already added the comment. Edit the existing one!")
-        return render(request, "single_product.html", {"prod": prod, "comments": comments, "form": form})
+                commentform.add_error("positive", "You already added the comment. Edit the existing one!")
+        return render(request, "single_product.html", {"prod": prod, "comments": comments, "commentform": commentform, "cartform": cartform})
 
 
 class ProdByCat(View):
@@ -101,6 +103,29 @@ class ShoppingCartView(View):
         if request.user.is_authenticated:
             return render(request, "cart.html", {"products": prods, "total": total_cost})
         HttpResponseRedirect(reverse("home"))
+
+
+class AddToCart(View):
+    def post(self, request, prod_id):
+        next_ = request.GET.get("next") if request.GET.get("next") is not None else reverse("home")
+        user = request.user
+        product = get_object_or_404(Product, pk=prod_id)
+        comments = Comment.objects.filter(product_id=product.id)
+        cartform = AddToCartForm(request.POST)
+        commentform = CommentForm()
+        if cartform.is_valid():
+            counter = cartform.cleaned_data.get("counter")
+            cart = ShoppingCart(owner=user, item=product, counter=counter)
+            try:
+                cart.save()
+            except IntegrityError:
+                cart = ShoppingCart.objects.get(owner=user, item=product)
+                cart.counter += counter
+                try:
+                    cart.save()
+                except IntegrityError:
+                    HttpResponseRedirect(next_)
+        return HttpResponseRedirect(next_)
 
 
 class DeleteFromCart(View):

@@ -24,7 +24,7 @@
                 {% for prod in products %}
                     <tr>
                         <td>{{ prod.id }}</td>
-                        <td>{{ prod }}</td>
+                        <td><a href="{% url "single_product" prod_id=prod.id%}">{{ prod }}</a></td>
                         <td><a href="{% url "minus_shoppingcart" prod_id=prod.id %}">{% bootstrap_icon "minus" %}</a> {{ prod.product_in_cart.get.counter }} <a href="{% url "plus_shoppingcart" prod_id=prod.id %}">{% bootstrap_icon "plus" %}</a></td>
                         <td><a href="{% url "del_shoppingcart" prod_id=prod.id %}">delete</a></td>
                         <td>{{ prod.price }} $</td>
