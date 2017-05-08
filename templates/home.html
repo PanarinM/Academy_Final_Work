@@ -20,4 +20,25 @@
             </div>
         </div>
     {% endfor %}
+
+    <div class="pagination">
+        <span class="step-links">
+            {% if products.has_previous %}
+                <a href="?page={{ products.previous_page_number }}">previous</a>
+            {% endif %}
+
+            {% for page_num in page_numbers %}
+                {% if page_num != "..." %}
+                    <a href="?page={{ page_num }}">{{ page_num }}</a>
+                {% else %}
+                    {{ page_num }}
+                {% endif %}
+            {% endfor %}
+
+            {% if products.has_next %}
+                <a href="?page={{ products.next_page_number }}">next</a>
+            {% endif %}
+        </span>
+    </div>
+
 {% endblock content %}

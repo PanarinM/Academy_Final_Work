@@ -25,7 +25,7 @@ class Product(models.Model):
     manufacturer = models.CharField(max_length=40)
     name = models.CharField(max_length=40)
     price = models.DecimalField(max_digits=8, decimal_places=2)
-    photo = models.FileField(upload_to=get_file_path)
+    photo = models.FileField(upload_to=get_file_path, default="../static/default_img/default_prod.jpg")
     category = models.ForeignKey(Category, related_name="category")
     description = models.TextField(blank=True, null=True, default="There is no description for this product!")
     rating = models.DecimalField(max_digits=3, decimal_places=1, default=0)

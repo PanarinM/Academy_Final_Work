@@ -1,10 +1,11 @@
-from __future__ import unicode_literals
+from os import path
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 from django.core.exceptions import ValidationError
 
 from utils import get_file_path
+
 
 
 def validate_phone(value):
@@ -57,7 +58,7 @@ class User(AbstractBaseUser):
     phone = models.CharField(max_length=10, null=True, blank=True, validators=[validate_phone])
     birthday = models.DateField(null=True, blank=True)
     registered = models.DateTimeField(auto_now_add=True)
-    avatar = models.ImageField(upload_to=get_file_path, default='/user/default_user.png')
+    avatar = models.ImageField(upload_to=get_file_path, default="../static/default_img/default_user.png")
     country = models.CharField(max_length=30, null=True, blank=True)
     city = models.CharField(max_length=30, null=True, blank=True)
     street = models.CharField(max_length=30, null=True, blank=True)

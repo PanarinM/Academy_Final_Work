@@ -25,4 +25,4 @@ urlpatterns = [
     url(r'^user/', include('users.urls')),
     url(r'^product/', include('products.urls')),
     url(r'^$', Home.as_view(), name='home'),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

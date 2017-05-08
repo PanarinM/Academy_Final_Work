@@ -26,7 +26,12 @@ class Register(View):
             password = form.cleaned_data['password2']
             phone = form.cleaned_data['phone']
             email = form.cleaned_data['email']
-            User.objects.create_user(username, email, phone, password)
+            avatar = form.cleaned_data["avatar"]
+            user = User.objects.create_user(username, email, phone, password)
+            if avatar is not None:
+                user.avatar = avatar
+                user.save()
+            print(user.firstname, user.avatar.url)
             auth_user = authenticate(password=password, username=username)
             if auth_user:
                 login(request, auth_user)

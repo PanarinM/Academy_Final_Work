@@ -4,15 +4,27 @@ from django.db.utils import IntegrityError
 from django.shortcuts import render, get_object_or_404, HttpResponseRedirect
 from django.urls import reverse
 from django.views import View
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from products.forms import CommentForm, AddToCartForm
 from products.models import Product, Comment, ShoppingCart
+from utils import gen_page_list
 
 
 class Home(View):
     def get(self, request):
-        prods = Product.objects.order_by("views")[:10]
-        return render(request, "home.html", {"products": prods})
+        products = Product.objects.order_by("-views")
+        paginator = Paginator(products, 10)
+        page = request.GET.get('page', 1)
+        try:
+            prods = paginator.page(page)
+        except PageNotAnInteger:
+            prods = paginator.page(1)
+        except EmptyPage:
+            prods = paginator.page(paginator.num_pages)
+
+        page_numbers = gen_page_list(int(page), paginator.num_pages)
+        return render(request, "home.html", {"products": prods, "page_numbers": page_numbers})
 
 
 class OneProduct(View):
@@ -57,8 +69,18 @@ class OneProduct(View):
 
 class ProdByCat(View):
     def get(self, request, cat_name):
-        prods = Product.objects.filter(category__category_name=cat_name)
-        return render(request, "products_by_cat.html", {"products": prods})
+        products = Product.objects.filter(category__category_name=cat_name).order_by("-views")
+        paginator = Paginator(products, 10)
+        page = request.GET.get('page', 1)
+        try:
+            prods = paginator.page(page)
+        except PageNotAnInteger:
+            prods = paginator.page(1)
+        except EmptyPage:
+            prods = paginator.page(paginator.num_pages)
+
+        page_numbers = gen_page_list(int(page), paginator.num_pages)
+        return render(request, "products_by_cat.html", {"products": prods, "page_numbers": page_numbers})
 
 
 class DelComment(View):
