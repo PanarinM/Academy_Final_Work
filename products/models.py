@@ -75,15 +75,3 @@ class Comment(models.Model):
 
     def __str__(self):
         return "{} {} {}".format(self.author, self.product, self.rating)
-
-
-class ShoppingCart(models.Model):
-    owner = models.ForeignKey(User, related_name="prod_owner")
-    item = models.ForeignKey(Product, related_name="product_in_cart", null=True)
-    counter = models.PositiveIntegerField(default=0)
-
-    class Meta:
-        unique_together = ("owner", "item")
-
-    def __str__(self):
-        return "{}  {}  {}".format(self.owner, self.item, self.counter)

@@ -1,7 +1,12 @@
 from django import forms
 
-from products.models import Comment, ShoppingCart
+from django.core.exceptions import ValidationError
 
+from products.models import Comment
+
+def validate_positive(value):
+    if value < 0:
+        raise ValidationError('%(value)s is not positive!', params={'value': value})
 
 class CommentForm(forms.ModelForm):
 
@@ -17,11 +22,5 @@ class CommentForm(forms.ModelForm):
         }
 
 
-class AddToCartForm(forms.ModelForm):
-
-    class Meta:
-        model = ShoppingCart
-        exclude = ("owner", "item")
-        widgets = {
-            "counter": forms.TextInput(attrs={"size": "1"}),
-        }
+class AddToCartForm(forms.Form):
+    counter = forms.IntegerField(widget=forms.NumberInput, label="Amount", validators=[validate_positive])
