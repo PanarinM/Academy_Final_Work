@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from products.models import Product, Category, Comment, Attribute, AttributeValue
+from products.models import Product, Category, Comment, Attribute, AttributeValue, ShoppingCart
 
 
 class AttributeAdmin(admin.ModelAdmin):
@@ -9,6 +9,10 @@ class AttributeAdmin(admin.ModelAdmin):
 
 class AttributeValueAdmin(admin.ModelAdmin):
     list_display = ("product", "attribute", "value")
+
+
+class ShoppingCartAdmin(admin.ModelAdmin):
+    list_display = ("owner", "item", "counter")
 
 
 class CommentAdmin(admin.ModelAdmin):
@@ -22,5 +26,6 @@ class ProductAdmin(admin.ModelAdmin):
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Category)
+admin.site.register(ShoppingCart, ShoppingCartAdmin)
 admin.site.register(Attribute, AttributeAdmin)
 admin.site.register(AttributeValue, AttributeValueAdmin)

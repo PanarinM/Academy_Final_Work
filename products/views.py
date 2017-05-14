@@ -7,7 +7,7 @@ from django.views import View
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from products.forms import CommentForm, AddToCartForm
-from products.models import Product, Comment
+from products.models import Product, Comment, ShoppingCart
 from utils import gen_page_list
 from decimal import Decimal
 
@@ -119,54 +119,92 @@ class EditComment(View):
 
 class ShoppingCartView(View):
     def get(self, request):
-        cart = request.session.get("cart", {})
-        products = []
-        total_cost = 0
-        for item in cart:
-            try:
-                product = Product.objects.get(id=item)
-                product.counter = cart[item]
-                products.append(product)
-                total_cost += Decimal(cart[item]) * product.price
-            except Product.DoesNotExist:
-                continue
-        return render(request, "cart.html", {"products": products, "total": total_cost})
+        if request.user.is_authenticated:
+            products = Product.objects.filter(product_in_cart__owner=request.user).order_by("id")
+            total_cost = 0
+            for item in products:
+                item.counter = item.product_in_cart.get().counter
+                total_cost += item.price * item.counter
+            return render(request, "cart.html", {"products": products, "total": total_cost})
+        else:
+            cart = request.session.get("cart", {})
+            products = []
+            total_cost = 0
+            for item in cart:
+                try:
+                    product = Product.objects.get(id=item)
+                    product.counter = cart[item]
+                    products.append(product)
+                    total_cost += Decimal(cart[item]) * product.price
+                except Product.DoesNotExist:
+                    continue
+            return render(request, "cart.html", {"products": products, "total": total_cost})
 
 
 class AddToCartView(View):
     def post(self, request, prod_id):
         next_ = request.GET.get("next") if request.GET.get("next") is not None else reverse("home")
-        cart = request.session.get("cart", {})
         product = get_object_or_404(Product, pk=prod_id)
         comments = Comment.objects.filter(product_id=product.id)
         cartform = AddToCartForm(request.POST)
         commentform = CommentForm()
-        if cartform.is_valid():
-            cart[str(product.id)] = cart.setdefault(str(product.id), 0) + cartform.cleaned_data.get("counter", 0)
-            request.session['cart'] = cart
-            return HttpResponseRedirect(next_)
-        return render(request, "single_product.html", {"prod": product, "comments": comments, "commentform": commentform, "cartform": cartform})
+        if request.user.is_authenticated:
+            user = request.user
+            if cartform.is_valid():
+                counter = cartform.cleaned_data.get("counter", 0)
+                cart = ShoppingCart(owner=user, item=product, counter=counter)
+                try:
+                    cart.save()
+                except IntegrityError:
+                    cart = ShoppingCart.objects.get(owner=user, item=product)
+                    cart.counter += counter
+                    try:
+                        cart.save()
+                    except IntegrityError:
+                        HttpResponseRedirect(next_)
+            return render(request, "single_product.html", {"prod": product, "comments": comments, "commentform": commentform, "cartform": cartform})
+        else:
+            cart = request.session.get("cart", {})
+            if cartform.is_valid():
+                cart[str(product.id)] = cart.setdefault(str(product.id), 0) + cartform.cleaned_data.get("counter", 0)
+                request.session['cart'] = cart
+                return HttpResponseRedirect(next_)
+            return render(request, "single_product.html", {"prod": product, "comments": comments, "commentform": commentform, "cartform": cartform})
 
 
 class DeleteFromShoppingCart(View):
     def get(self, request, prod_id):
-        cart = request.session.get("cart", {})
-        cart.pop(str(prod_id), None)
-        request.session['cart'] = cart
+        if request.user.is_authenticated:
+            item = ShoppingCart.objects.get(item_id=prod_id)
+            item.delete()
+        else:
+            cart = request.session.get("cart", {})
+            cart.pop(str(prod_id), None)
+            request.session['cart'] = cart
         return HttpResponseRedirect(reverse("shoppingcart"))
 
 
 class RemoveOneFromCart(View):
     def get(self, request, prod_id):
-        cart = request.session.get("cart", {})
-        cart[str(prod_id)] -= 1
-        request.session['cart'] = cart
+        if request.user.is_authenticated:
+            item = ShoppingCart.objects.get(item_id=prod_id)
+            item.counter -= 1
+            item.save()
+        else:
+            cart = request.session.get("cart", {})
+            cart[str(prod_id)] -= 1
+            request.session['cart'] = cart
         return HttpResponseRedirect(reverse("shoppingcart"))
 
 
 class AddOneToCart(View):
     def get(self, request, prod_id):
-        cart = request.session.get("cart", {})
-        cart[str(prod_id)] += 1
-        request.session['cart'] = cart
+        if request.user.is_authenticated:
+            item = ShoppingCart.objects.get(item_id=prod_id)
+            item.counter += 1
+            item.save()
+        else:
+            cart = request.session.get("cart", {})
+            cart[str(prod_id)] += 1
+            request.session['cart'] = cart
         return HttpResponseRedirect(reverse("shoppingcart"))

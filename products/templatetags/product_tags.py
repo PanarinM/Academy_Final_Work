@@ -1,6 +1,6 @@
 from django import template
 
-from products.models import Category
+from products.models import Category, ShoppingCart
 
 register = template.Library()
 
@@ -12,8 +12,14 @@ def get_objects():
 
 @register.simple_tag(name='get_cart_count')
 def get_cart_count(request):
-    items = request.session.get("cart", {})
-    counter = 0
-    for item in items:
-        counter += items[item]
+    if request.user.is_authenticated:
+        items = ShoppingCart.objects.filter(owner_id=request.user.id)
+        counter = 0
+        for item in items:
+            counter += item.counter
+    else:
+        items = request.session.get("cart", {})
+        counter = 0
+        for item in items:
+            counter += items[item]
     return counter
