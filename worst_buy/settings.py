@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     # 3-rd party
     'solo',
     'bootstrap3',
-    'prettyjson',
     'mathfilters',
 
 ]
