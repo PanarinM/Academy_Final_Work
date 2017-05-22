@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from users.forms import UserCreationForm, UserLoginForm, ProfileForm, PassChangeForm
 from users.models import User
+from products.models import HistoryOfPurchases
 
 
 class Register(View):
@@ -31,7 +32,6 @@ class Register(View):
             if avatar is not None:
                 user.avatar = avatar
                 user.save()
-            print(user.firstname, user.avatar.url)
             auth_user = authenticate(password=password, username=username)
             if auth_user:
                 login(request, auth_user)
@@ -74,7 +74,8 @@ class Profile(View):
         if request.user.is_authenticated():
             user = request.user
             form = ProfileForm(instance=user)
-            return render(request, 'profile.html', {'form': form})
+            history = HistoryOfPurchases.objects.filter(user=request.user).order_by("date")
+            return render(request, 'profile.html', {'form': form, 'history': history})
         else:
             return HttpResponseRedirect(reverse('login'))
 

@@ -7,7 +7,6 @@ from django.core.exceptions import ValidationError
 from utils import get_file_path
 
 
-
 def validate_phone(value):
     codes = {'039',
              '050',

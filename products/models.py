@@ -87,3 +87,12 @@ class ShoppingCart(models.Model):
 
     def __str__(self):
         return "{}  {}  {}".format(self.owner, self.item, self.counter)
+
+
+class HistoryOfPurchases(models.Model):
+    user = models.ForeignKey(User, related_name="history_username")
+    history = models.TextField(blank=True, null=True)
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return "{} {}".format(self.user, self.date)

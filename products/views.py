@@ -1,15 +1,21 @@
 from datetime import datetime
+from decimal import Decimal
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
 
 from django.db.utils import IntegrityError
 from django.shortcuts import render, get_object_or_404, HttpResponseRedirect
 from django.urls import reverse
 from django.views import View
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.http import HttpResponse
+
 
 from products.forms import CommentForm, AddToCartForm
-from products.models import Product, Comment, ShoppingCart
+from products.models import Product, Comment, ShoppingCart, HistoryOfPurchases
 from utils import gen_page_list
-from decimal import Decimal
+from core.models import Configuration
+from worst_buy.settings import ALLOWED_HOSTS
 
 
 class Home(View):
@@ -208,3 +214,62 @@ class AddOneToCart(View):
             cart[str(prod_id)] += 1
             request.session['cart'] = cart
         return HttpResponseRedirect(reverse("shoppingcart"))
+
+
+def gen_pdf(request):
+    # Create the HttpResponse object with the appropriate PDF headers.
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'filename="somefilename.pdf"'
+
+    # Create the PDF object, using the response object as its "file."
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    # Draw things on the PDF. Here's where the PDF generation happens.
+    # See the ReportLab documentation for the full list of functionality.
+    p.drawString(220, height-90, ALLOWED_HOSTS[0])
+    image = Configuration.objects.all()[0].logo.url
+    p.drawImage(".{}".format(image), 50, height-120, mask=[50, 255, 50, 255, 50, 255], width=width/5, height=height/10)
+
+    if request.user.is_authenticated:
+        p.drawString(50, height - 140, request.user.username)
+        p.drawString(50, height - 160, request.user.email)
+    else:
+        #TODO: Implement email form for anonymous!!!
+        pass
+
+    # Close the PDF object cleanly, and we're done.
+    p.showPage()
+    p.save()
+
+    return response
+
+
+def generate_text_for_history(items):
+    output = []
+    overall_price = 0
+    for item in items:
+        total_price = item.item.price*item.counter
+        item_desc = "name:{}, manufacturer:{}, price:{}$, amount:{}, total price:{}$".format(item.item.name, item.item.manufacturer, item.item.price, item.counter, total_price)
+        overall_price += total_price
+        output.append(item_desc)
+    output.append("overall price: {}$".format(overall_price))
+    return " \n".join(output)
+
+
+class CheckoutPdfView(View):
+    def get(self, request):
+        response = gen_pdf(request)
+        user_items = ShoppingCart.objects.filter(owner_id=request.user.id)
+        text = generate_text_for_history(user_items)
+        if request.user.is_authenticated:
+            try:
+                HistoryOfPurchases.objects.create(user=request.user, history=text)
+            except IntegrityError:
+                HttpResponseRedirect(reverse("home"))
+        else:
+            # TODO: finish for anonymous users
+            pass
+        for item in user_items:
+            item.delete()
+        return response
