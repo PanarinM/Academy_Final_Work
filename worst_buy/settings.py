@@ -169,6 +169,15 @@ REST_FRAMEWORK = {
    ),
 }
 
+# from django.core.mail import send_mail
+# send_mail('Subject here','Here is the message.','from@example.com',['micahelpanarin@inbox.ru'],fail_silently=False,)
+
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_HOST_USER = "worstbuyforreal@gmail.com"
+EMAIL_HOST_PASSWORD = "worstbuyforrealisepic"
+EMAIL_USE_TLS = True
+
 try:
     from worst_buy.local_settings import *
 except ImportError:

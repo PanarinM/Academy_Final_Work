@@ -5,6 +5,7 @@ from reportlab.lib.pagesizes import A4, inch, portrait
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image
 import operator
+from io import BytesIO
 
 from django.db.utils import IntegrityError
 from django.shortcuts import render, get_object_or_404, HttpResponseRedirect
@@ -13,6 +14,7 @@ from django.views import View
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponse
 from django.db.models import Q
+from django.core.mail import EmailMessage
 
 
 from products.forms import CommentForm, AddToCartForm
@@ -249,7 +251,9 @@ def gen_pdf(request, *args):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'filename="somefilename.pdf"'
 
-    doc = SimpleDocTemplate(response, pagesize=A4, rightMargin=10, leftMargin=10, topMargin=30, bottomMargin=18)
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=10, leftMargin=10, topMargin=30, bottomMargin=18)
     doc.pagesize = portrait(A4)
     elements = []
 
@@ -322,8 +326,11 @@ def gen_pdf(request, *args):
         elements.append(t)
 
     doc.build(elements)
+    pdf = buffer.getvalue()
+    buffer.close()
+    response.write(pdf)
 
-    return response
+    return response, pdf
 
 
 def generate_text_for_history(items):
@@ -341,7 +348,7 @@ def generate_text_for_history(items):
 class CheckoutPdfView(View):
     def get(self, request):
         anon_email = request.GET.get("anon_mail")
-        response = gen_pdf(request, anon_email)
+        response, pdf = gen_pdf(request, anon_email)
         if request.user.is_authenticated:
             try:
                 user_items = ShoppingCart.objects.filter(owner_id=request.user.id)
@@ -349,11 +356,16 @@ class CheckoutPdfView(View):
                 HistoryOfPurchases.objects.create(user=request.user, history=text)
                 for item in user_items:
                     item.delete()
+                email = EmailMessage("Hello, {}!".format(request.user.username), "Here is your checkout pdf!", to=[request.user.email])
+                email.attach('checkout.pdf', pdf, 'application/pdf')
+                email.send()
             except IntegrityError:
                 HttpResponseRedirect(reverse("home"))
         else:
-            # TODO: finish for anonymous users
-            pass
+            email = EmailMessage("Hello, Anon!", "Here is your checkout pdf!",
+                                 to=[anon_email])
+            email.attach('checkout.pdf', pdf, 'application/pdf')
+            email.send()
         return response
 
 
