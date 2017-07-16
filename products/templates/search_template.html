@@ -1,0 +1,57 @@
+{% extends 'Base.html' %}
+
+{% block content %}
+    {% if products|length == 0 %}
+        <h3>Sorry! No products found for request "{{ query }}"</h3>
+    {% else %}
+        <h4>Found {{ products|length }} result(s)</h4>
+        {% for prod in products %}
+            <div class="row">
+                <div class="panel panel-default">
+                    <a href="{% url 'single_product' prod_id=prod.id %}">
+                        <div class="panel-body">
+                            <div class="col-md-6">
+                                <img src="{{ prod.photo.url }}" class="img-responsive">
+                                <h4>{{ prod.name }} {{ prod.manufacturer }}</h4>
+                            </div>
+                            <div class="col-md-6 panel panel-default" style="color: black">
+                                {% for attribute_name in  prod.product_for_value.all|slice:":5" %}
+                                    <p>{{ attribute_name.attribute.name }}: {{ attribute_name.value }} {{ attribute_name.attribute.dimension }}</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                {% if products.has_previous %}
+                    <li>
+                        <a href="?page={{ products.previous_page_number }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for page_num in page_numbers %}
+                    {% if page_num != "..." %}
+                        <li><a href="?page={{ page_num }}">{{ page_num }}</a></li>
+                    {% else %}
+                        <li><a href="#">{{ page_num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if products.has_next %}
+                    <li>
+                        <a href="?page={{ products.next_page_number }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+
+{% endblock content %}

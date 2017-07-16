@@ -37,6 +37,9 @@ class Product(models.Model):
     def __str__(self):
         return "{}  {}  {}".format(self.manufacturer, self.name, self.category)
 
+    def _get_filters(self):
+        return {i.attribute.name: {i.value} for i in self.product_for_value.all()}
+
 
 class Attribute(models.Model):
     category = models.ForeignKey(Category, related_name="attribute_for_category")

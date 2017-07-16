@@ -8,6 +8,8 @@
 {# Load CSS and JavaScript #}
 {% bootstrap_css %}
 {% bootstrap_javascript %}
+<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+<script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 
 {# Display django.contrib.messages as Bootstrap alerts #}
 {% bootstrap_messages %}
@@ -36,15 +38,15 @@
         height: 10px;
     }
     .numberCircle {
-    border-radius: 50%;
-    width: 21px;
-    height: 21px;
-    border: 2px solid #fff;
-    color: #fff;
-    text-align: center;
-    font: 15px Arial, sans-serif;
-    display: inline-block;
-}
+        border-radius: 50%;
+        width: 21px;
+        height: 21px;
+        border: 2px solid #fff;
+        color: #fff;
+        text-align: center;
+        font: 15px Arial, sans-serif;
+        display: inline-block;
+    }
 </style>
 
 {% get_solo 'core.Configuration' as configuration %}
@@ -52,11 +54,21 @@
 {% get_cart_count request as cart_count %}
 
 <div class="container-fluid">
-	<div class="row">
-		<div class="col-md-4 bg_head box_height">
+    <div class="row">
+        <div class="col-md-2 bg_head box_height">
             <a href={% url 'home' %}><img class="img-responsive" src="{{ configuration.logo.url }}" alt=""></a>
         </div>
-        <div class="col-md-8 bg_head box_height">
+        <div class="col-md-2 bg_head box_height"></div>
+        <div class="col-md-4 bg_head box_height">
+            <div class="box_height"></div>
+            <form id="searchform" action="{% url "search" %}" method="get" accept-charset="utf-8">
+                <input class="searchfield col-xs-10" id="searchbox" name="q" type="text">
+                <button class="searchbutton" type="submit">
+                    <i class="fa fa-search">search {% bootstrap_icon "search" %}</i>
+                </button>
+            </form>
+        </div>
+        <div class="col-md-4 bg_head box_height">
             <div class="log_text">
                 {% if request.user.is_authenticated %}
                     Hello, <a class="log_text" href="{% url 'user_profile' %}">{{ request.user.username }}</a>!
@@ -65,42 +77,57 @@
                         <a class="btn btn-primary" href="{% url 'shoppingcart' %}" role="button">{% bootstrap_icon "shopping-cart" %} Shopping cart <div class="numberCircle">{{ cart_count }}</div></a>
                     {% endbuttons %}
                 {% else %}
-                     Hello, anon.
+                    Hello, anon.
                     {% buttons %}
                         <a class="btn btn-primary" href="{% url 'login' %}?next={{ request.path }}" role="button">Log in {% bootstrap_icon "user" %}</a>
                         <a class="btn btn-primary" href="{% url 'register' %}?next={{ request.path }}" role="button">Register {% bootstrap_icon "plus" %}</a>
-                         <a class="btn btn-primary" href="{% url 'shoppingcart' %}" role="button">{% bootstrap_icon "shopping-cart" %} Shopping cart <div class="numberCircle">{{ cart_count }}</div></a>
+                        <a class="btn btn-primary" href="{% url 'shoppingcart' %}" role="button">{% bootstrap_icon "shopping-cart" %} Shopping cart <div class="numberCircle">{{ cart_count }}</div></a>
                     {% endbuttons %}
                 {% endif %}
             </div>
         </div>
-        </div>
+    </div>
     <div class="row sep_box">
     </div>
-	<div class="row">
-		<div class="col-md-2">
-			<div class="list-group">
-                <a href="{% url 'home' %}" class="list-group-item">Home</a>
-                {% for category in categories %}
-                    <a href="{% url 'prod_by_cat' cat_name=category.category_name %}" class="list-group-item menu-text">{{ category }}</a>
-                {% endfor %}
-			</div>
-		</div>
-		<div class="col-md-6">
+    <div class="row">
+        <div class="col-md-2">
+            {% block menu %}
+                <div class="panel-group">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a href="{% url 'home' %}">Home</a>
+                            </h4>
+                        </div>
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a data-toggle="collapse" href="#collapse1">Categories</a>
+                            </h4>
+                        </div>
+                        <div id="collapse1" class="collapse">
+                            {% for category in categories %}
+                                <div class="panel-body"><a href="{% url 'prod_by_cat' cat_name=category.category_name %}">{{ category }}</a></div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endblock menu %}
+        </div>
+        <div class="col-md-6">
             {% block content %}
                 content
             {% endblock content %}
-		</div>
-	</div>
-	<div class="row bg_foot">
-		<div class="col-md-4">
-		</div>
-		<div class="col-md-4">
-			<p>
-				{{ configuration.footer_text }}
-			</p>
-		</div>
-		<div class="col-md-4">
-		</div>
-	</div>
+        </div>
+    </div>
+    <div class="row bg_foot">
+        <div class="col-md-4">
+        </div>
+        <div class="col-md-4">
+            <p>
+                {{ configuration.footer_text }}
+            </p>
+        </div>
+        <div class="col-md-4">
+        </div>
+    </div>
 </div>

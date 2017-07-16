@@ -1,7 +1,9 @@
 from datetime import datetime
 from decimal import Decimal
+from functools import reduce
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+import operator
 
 from django.db.utils import IntegrityError
 from django.shortcuts import render, get_object_or_404, HttpResponseRedirect
@@ -9,13 +11,13 @@ from django.urls import reverse
 from django.views import View
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponse
+from django.db.models import Q
 
 
 from products.forms import CommentForm, AddToCartForm
 from products.models import Product, Comment, ShoppingCart, HistoryOfPurchases
 from utils import gen_page_list
 from core.models import Configuration
-from worst_buy.settings import ALLOWED_HOSTS
 
 
 class Home(View):
@@ -76,7 +78,31 @@ class OneProduct(View):
 
 class ProdByCat(View):
     def get(self, request, cat_name):
-        products = Product.objects.filter(category__category_name=cat_name).order_by("-views")
+        products = list(Product.objects.filter(category__category_name=cat_name).order_by("-views"))
+        filters = {}
+        for product in products:
+            for attribute, value in product._get_filters().items():
+                filters.setdefault(attribute, set())
+                filters[attribute].update(value)
+
+        filtered_products = []
+
+        def filterfunc(prod, filter_, value):
+            if filter_ in prod._get_filters():
+                if value in prod._get_filters()[filter_]:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+
+        for filter_ in filters:
+            if filter_ in request.GET:
+                filtered_products += [prod for prod in products if filterfunc(prod, filter_, request.GET.get(filter_))]
+
+        if len(filtered_products) > 0:
+            products = list(set(filtered_products))
+
         paginator = Paginator(products, 10)
         page = request.GET.get('page', 1)
         try:
@@ -87,7 +113,9 @@ class ProdByCat(View):
             prods = paginator.page(paginator.num_pages)
 
         page_numbers = gen_page_list(int(page), paginator.num_pages)
-        return render(request, "products_by_cat.html", {"products": prods, "page_numbers": page_numbers})
+        return render(request, "products_by_cat.html", {"products": prods,
+                                                        "page_numbers": page_numbers,
+                                                        "filters": filters})
 
 
 class DelComment(View):
@@ -227,16 +255,34 @@ def gen_pdf(request):
 
     # Draw things on the PDF. Here's where the PDF generation happens.
     # See the ReportLab documentation for the full list of functionality.
-    p.drawString(220, height-90, ALLOWED_HOSTS[0])
+    p.drawString(220, height-50, request.get_host())
+    p.drawString(220, height-70, Configuration.objects.all()[0].privacy_policy)
     image = Configuration.objects.all()[0].logo.url
     p.drawImage(".{}".format(image), 50, height-120, mask=[50, 255, 50, 255, 50, 255], width=width/5, height=height/10)
 
-    if request.user.is_authenticated:
-        p.drawString(50, height - 140, request.user.username)
-        p.drawString(50, height - 160, request.user.email)
-    else:
-        #TODO: Implement email form for anonymous!!!
-        pass
+    # if request.user.is_authenticated:
+    #     p.drawString(50, height - 140, request.user.username)
+    #     p.drawString(50, height - 160, request.user.email)
+    #     products = Product.objects.filter(product_in_cart__owner=request.user).order_by("id")
+    #     total_cost = 0
+    #     for item in products:
+    #         item.counter = item.product_in_cart.get().counter
+    #         total_cost += item.price * item.counter
+    # else:
+    #     # TODO: Implement email form for anonymous!!!
+    #     p.drawString(50, height - 140, "Anonymous")
+    #     p.drawString(50, height - 160, "no email")
+    #     cart = request.session.get("cart", {})
+    #     products = []
+    #     total_cost = 0
+    #     for item in cart:
+    #         try:
+    #             product = Product.objects.get(id=item)
+    #             product.counter = cart[item]
+    #             products.append(product)
+    #             total_cost += Decimal(cart[item]) * product.price
+    #         except Product.DoesNotExist:
+    #             continue
 
     # Close the PDF object cleanly, and we're done.
     p.showPage()
@@ -273,3 +319,28 @@ class CheckoutPdfView(View):
         for item in user_items:
             item.delete()
         return response
+
+
+class SearchView(View):
+    def get(self, request):
+        query = self.request.GET.get('q')
+        if query:
+            query_list = query.split()
+            products = Product.objects.filter(
+                reduce(operator.and_, (Q(name__icontains=q) for q in query_list)) |
+                reduce(operator.and_, (Q(manufacturer__icontains=q) for q in query_list)) |
+                reduce(operator.and_, (Q(description__icontains=q) for q in query_list))
+            ).order_by("-views")
+        else:
+            products = Product.objects.all().order_by("-views")
+        paginator = Paginator(products, 10)
+        page = request.GET.get('page', 1)
+        try:
+            prods = paginator.page(page)
+        except PageNotAnInteger:
+            prods = paginator.page(1)
+        except EmptyPage:
+            prods = paginator.page(paginator.num_pages)
+
+        page_numbers = gen_page_list(int(page), paginator.num_pages)
+        return render(request, "search_template.html", {"products": prods, "page_numbers": page_numbers, "query": query})
