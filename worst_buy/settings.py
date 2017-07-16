@@ -103,7 +103,7 @@ DATABASES = {
 }
 
 import dj_database_url
-DATABASES['default'] =  dj_database_url.config()
+DATABASES['default'] = dj_database_url.config()
 
 # Update database configuration with $DATABASE_URL.
 db_from_env = dj_database_url.config(conn_max_age=500)
@@ -158,9 +158,6 @@ STATICFILES_DIRS = (
 
 STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
 
-# REDACTOR_OPTIONS = {'lang': 'en'}
-# REDACTOR_UPLOAD = 'uploads/'
-
 AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
@@ -169,8 +166,6 @@ REST_FRAMEWORK = {
    ),
 }
 
-# from django.core.mail import send_mail
-# send_mail('Subject here','Here is the message.','from@example.com',['micahelpanarin@inbox.ru'],fail_silently=False,)
 
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587

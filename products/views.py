@@ -52,7 +52,8 @@ class OneProduct(View):
         prod.save()
         commentform = CommentForm()
         cartform = AddToCartForm()
-        return render(request, "single_product.html", {"prod": prod, "comments": comments, "commentform": commentform, "cartform": cartform})
+        return render(request, "single_product.html", {"prod": prod, "comments": comments,
+                                                       "commentform": commentform, "cartform": cartform})
 
     def post(self, request, prod_id):
         commentform = CommentForm(request.POST)
@@ -76,7 +77,8 @@ class OneProduct(View):
                 comm.save()
             except IntegrityError:
                 commentform.add_error("positive", "You already added the comment. Edit the existing one!")
-        return render(request, "single_product.html", {"prod": prod, "comments": comments, "commentform": commentform, "cartform": cartform})
+        return render(request, "single_product.html", {"prod": prod, "comments": comments,
+                                                       "commentform": commentform, "cartform": cartform})
 
 
 class ProdByCat(View):
@@ -199,14 +201,16 @@ class AddToCartView(View):
                         cart.save()
                     except IntegrityError:
                         HttpResponseRedirect(next_)
-            return render(request, "single_product.html", {"prod": product, "comments": comments, "commentform": commentform, "cartform": cartform})
+            return render(request, "single_product.html",
+                          {"prod": product, "comments": comments, "commentform": commentform, "cartform": cartform})
         else:
             cart = request.session.get("cart", {})
             if cartform.is_valid():
                 cart[str(product.id)] = cart.setdefault(str(product.id), 0) + cartform.cleaned_data.get("counter", 0)
                 request.session['cart'] = cart
                 return HttpResponseRedirect(next_)
-            return render(request, "single_product.html", {"prod": product, "comments": comments, "commentform": commentform, "cartform": cartform})
+            return render(request, "single_product.html",
+                          {"prod": product, "comments": comments, "commentform": commentform, "cartform": cartform})
 
 
 class DeleteFromShoppingCart(View):
@@ -289,7 +293,11 @@ def gen_pdf(request, *args):
         total_cost = 0
         for item in products:
             item.counter = item.product_in_cart.get().counter
-            data.append([item.id, item.name, item.counter, "{} $".format(item.price), "{} $".format(item.price*item.counter)])
+            data.append([item.id,
+                         item.name,
+                         item.counter,
+                         "{} $".format(item.price),
+                         "{} $".format(item.price*item.counter)])
             total_cost += item.price * item.counter
         data.append([" ", " ", " ", " ", "{} $".format(total_cost)])
         header = Table(data=header_data, colWidths=[150, 75, 75, 150])
@@ -338,7 +346,11 @@ def generate_text_for_history(items):
     overall_price = 0
     for item in items:
         total_price = item.item.price*item.counter
-        item_desc = "name:{}, manufacturer:{}, price:{}$, amount:{}, total price:{}$".format(item.item.name, item.item.manufacturer, item.item.price, item.counter, total_price)
+        item_desc = "name:{}, manufacturer:{}, price:{}$, amount:{}, total price:{}$".format(item.item.name,
+                                                                                             item.item.manufacturer,
+                                                                                             item.item.price,
+                                                                                             item.counter,
+                                                                                             total_price)
         overall_price += total_price
         output.append(item_desc)
     output.append("overall price: {}$".format(overall_price))
@@ -356,7 +368,8 @@ class CheckoutPdfView(View):
                 HistoryOfPurchases.objects.create(user=request.user, history=text)
                 for item in user_items:
                     item.delete()
-                email = EmailMessage("Hello, {}!".format(request.user.username), "Here is your checkout pdf!", to=[request.user.email])
+                email = EmailMessage("Hello, {}!".format(request.user.username), "Here is your checkout pdf!",
+                                     to=[request.user.email])
                 email.attach('checkout.pdf', pdf, 'application/pdf')
                 email.send()
             except IntegrityError:
@@ -391,4 +404,6 @@ class SearchView(View):
             prods = paginator.page(paginator.num_pages)
 
         page_numbers = gen_page_list(int(page), paginator.num_pages)
-        return render(request, "search_template.html", {"products": prods, "page_numbers": page_numbers, "query": query})
+        return render(request, "search_template.html", {"products": prods,
+                                                        "page_numbers": page_numbers,
+                                                        "query": query})
