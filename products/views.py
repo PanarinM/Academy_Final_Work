@@ -270,7 +270,7 @@ def gen_pdf(request, *args):
                         ])
     header_style = TableStyle([('VALIGN', (0, 0), (3, -1), 'TOP'),
                                ('VALIGN', (0, -1), (-1, -1), 'MIDDLE'),
-                               ('SIZE', (0, 0), (0, 3), 20),
+                               ('SIZE', (0, 0), (0, 3), 15),
                                ('SIZE', (3, 0), (3, 0), 20)
                                ])
     try:
@@ -279,8 +279,8 @@ def gen_pdf(request, *args):
         logo.drawWidth = 2*inch
     except OSError:
         logo = """here will be logo 
-        image when media
-        is ready!"""
+                  image when media
+                  is ready!"""
 
     header_data = [[logo, "", "", request.get_host()],
                    ["", "", "",  Configuration.objects.all()[0].privacy_policy],
