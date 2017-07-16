@@ -5,13 +5,14 @@
 
 {% block content %}
     <style>
-    table, th, td {
-        border: 1px solid black;
-        padding: 5px;
-        empty-cells: hide;
-        border-collapse: separate;
-    }
+        table, th, td {
+            border: 1px solid black;
+            padding: 5px;
+            empty-cells: hide;
+            border-collapse: separate;
+        }
     </style>
+
     <div class="row">
         <div class="panel panel-default">
             <table style="width: 100%">
@@ -41,9 +42,18 @@
                 </tr>
             </table>
         </div>
-    {% buttons %}
-        <a class="btn btn-primary" href="{% url "gen_pdf" %}" role="button">Checkout {% bootstrap_icon "arrow-right" %}</a>
-    {% endbuttons %}
+        {% if not request.user.is_authenticated %}
+            <form action="{% url "gen_pdf" %}" method="get" accept-charset="utf-8">
+                <input name="anon_mail" type="text" placeholder="Input email here!" required="required" class="col-xs-8"><br><br>
+                <button class="btn btn-primary" type="submit">
+                    Checkout {% bootstrap_icon "arrow-right" %}
+                </button>
+            </form>
+        {% else %}
+            {% buttons %}
+                <a class="btn btn-primary" href="{% url "gen_pdf" %}" type="submit" role="button">Checkout {% bootstrap_icon "arrow-right" %}</a>
+            {% endbuttons %}
+        {% endif %}
     </div>
 
 {% endblock content%}

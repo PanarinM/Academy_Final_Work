@@ -74,7 +74,7 @@ class Profile(View):
         if request.user.is_authenticated():
             user = request.user
             form = ProfileForm(instance=user)
-            history = HistoryOfPurchases.objects.filter(user=request.user).order_by("date")
+            history = HistoryOfPurchases.objects.filter(user=request.user).order_by("-date")
             return render(request, 'profile.html', {'form': form, 'history': history})
         else:
             return HttpResponseRedirect(reverse('login'))

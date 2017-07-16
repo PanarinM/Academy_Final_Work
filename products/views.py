@@ -1,8 +1,9 @@
 from datetime import datetime
 from decimal import Decimal
 from functools import reduce
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4, inch, portrait
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image
 import operator
 
 from django.db.utils import IntegrityError
@@ -244,49 +245,83 @@ class AddOneToCart(View):
         return HttpResponseRedirect(reverse("shoppingcart"))
 
 
-def gen_pdf(request):
-    # Create the HttpResponse object with the appropriate PDF headers.
+def gen_pdf(request, *args):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'filename="somefilename.pdf"'
 
-    # Create the PDF object, using the response object as its "file."
-    p = canvas.Canvas(response, pagesize=A4)
-    width, height = A4
+    doc = SimpleDocTemplate(response, pagesize=A4, rightMargin=10, leftMargin=10, topMargin=30, bottomMargin=18)
+    doc.pagesize = portrait(A4)
+    elements = []
 
-    # Draw things on the PDF. Here's where the PDF generation happens.
-    # See the ReportLab documentation for the full list of functionality.
-    p.drawString(220, height-50, request.get_host())
-    p.drawString(220, height-70, Configuration.objects.all()[0].privacy_policy)
-    image = Configuration.objects.all()[0].logo.url
-    p.drawImage(".{}".format(image), 50, height-120, mask=[50, 255, 50, 255, 50, 255], width=width/5, height=height/10)
+    style = TableStyle([('VALIGN', (0, 0), (0, -1), 'TOP'),
+                        ('TEXTCOLOR', (0, 0), (0, -1), colors.blue),
+                        ('VALIGN', (0, -1), (-1, -1), 'MIDDLE'),
+                        ('TEXTCOLOR', (0, -1), (-1, -1), colors.green),
+                        ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),
+                        ('BOX', (0, 0), (-1, -1), 0.25, colors.black),
+                        ])
+    header_style = TableStyle([('VALIGN', (0, 0), (3, -1), 'TOP'),
+                               ('VALIGN', (0, -1), (-1, -1), 'MIDDLE'),
+                               ('SIZE', (0, 0), (0, 3), 20),
+                               ('SIZE', (3, 0), (3, 0), 20)
+                               ])
 
-    # if request.user.is_authenticated:
-    #     p.drawString(50, height - 140, request.user.username)
-    #     p.drawString(50, height - 160, request.user.email)
-    #     products = Product.objects.filter(product_in_cart__owner=request.user).order_by("id")
-    #     total_cost = 0
-    #     for item in products:
-    #         item.counter = item.product_in_cart.get().counter
-    #         total_cost += item.price * item.counter
-    # else:
-    #     # TODO: Implement email form for anonymous!!!
-    #     p.drawString(50, height - 140, "Anonymous")
-    #     p.drawString(50, height - 160, "no email")
-    #     cart = request.session.get("cart", {})
-    #     products = []
-    #     total_cost = 0
-    #     for item in cart:
-    #         try:
-    #             product = Product.objects.get(id=item)
-    #             product.counter = cart[item]
-    #             products.append(product)
-    #             total_cost += Decimal(cart[item]) * product.price
-    #         except Product.DoesNotExist:
-    #             continue
+    logo = Image(".{}".format(Configuration.objects.all()[0].logo.url))
+    logo.drawHeight = 2*inch*logo.drawHeight / logo.drawWidth
+    logo.drawWidth = 2*inch
 
-    # Close the PDF object cleanly, and we're done.
-    p.showPage()
-    p.save()
+    header_data = [[logo, "", "", request.get_host()],
+                   ["", "", "",  Configuration.objects.all()[0].privacy_policy],
+                   ]
+
+    data = [["Product id", "Product name", "Amount", "Price", "Sub/Total"]]
+
+    if request.user.is_authenticated:
+        header_data.append([request.user.username, "", "", ""])
+        header_data.append([request.user.email, "", "", ""])
+        header_data.append(["", "", "", ""])
+        header_data.append(["", "", "", ""])
+        products = Product.objects.filter(product_in_cart__owner=request.user).order_by("id")
+        total_cost = 0
+        for item in products:
+            item.counter = item.product_in_cart.get().counter
+            data.append([item.id, item.name, item.counter, "{} $".format(item.price), "{} $".format(item.price*item.counter)])
+            total_cost += item.price * item.counter
+        data.append([" ", " ", " ", " ", "{} $".format(total_cost)])
+        header = Table(data=header_data, colWidths=[150, 75, 75, 150])
+        header.setStyle(tblstyle=header_style)
+        t = Table(data=data, colWidths=[150, 150, 50, 50, 50])
+        t.setStyle(tblstyle=style)
+        elements.append(header)
+        elements.append(t)
+
+    else:
+        header_data.append(["", "", "", ""])
+        header_data.append([args[0], "", "", ""])
+        header_data.append(["", "", "", ""])
+        header_data.append(["", "", "", ""])
+        cart = request.session.get("cart", {})
+        total_cost = 0
+        for item in cart:
+            try:
+                product = Product.objects.get(id=item)
+                product.counter = cart[item]
+                data.append(
+                    [product.id, product.name, product.counter,
+                     "{} $".format(product.price),
+                     "{} $".format(product.price * product.counter)])
+                total_cost += Decimal(cart[item]) * product.price
+            except Product.DoesNotExist:
+                continue
+        data.append([" ", " ", " ", " ", "{} $".format(total_cost)])
+        header = Table(data=header_data, colWidths=[150, 75, 75, 150])
+        header.setStyle(tblstyle=header_style)
+        t = Table(data=data, colWidths=[150, 150, 50, 50, 50])
+        t.setStyle(tblstyle=style)
+        elements.append(header)
+        elements.append(t)
+
+    doc.build(elements)
 
     return response
 
@@ -305,19 +340,20 @@ def generate_text_for_history(items):
 
 class CheckoutPdfView(View):
     def get(self, request):
-        response = gen_pdf(request)
-        user_items = ShoppingCart.objects.filter(owner_id=request.user.id)
-        text = generate_text_for_history(user_items)
+        anon_email = request.GET.get("anon_mail")
+        response = gen_pdf(request, anon_email)
         if request.user.is_authenticated:
             try:
+                user_items = ShoppingCart.objects.filter(owner_id=request.user.id)
+                text = generate_text_for_history(user_items)
                 HistoryOfPurchases.objects.create(user=request.user, history=text)
+                for item in user_items:
+                    item.delete()
             except IntegrityError:
                 HttpResponseRedirect(reverse("home"))
         else:
             # TODO: finish for anonymous users
             pass
-        for item in user_items:
-            item.delete()
         return response
 
 
