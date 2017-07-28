@@ -23,9 +23,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'n3wmm3napdpq4kc!jzu$xx(=qqlqd7*a9t+q)1&5k-%z!+$oy0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['worst-buy.herokuapp.com']
+ALLOWED_HOSTS = ['52.14.234.201']
 
 
 # Application definition
@@ -94,9 +94,9 @@ WSGI_APPLICATION = 'worst_buy.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'worstest_buy',
-        'USER': 'postgres',
-        'PASSWORD': 'Southpark4ever',
+        'NAME': 'worst_buy',
+        'USER': 'worst_buy',
+        'PASSWORD': 'worstbuy135',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }
